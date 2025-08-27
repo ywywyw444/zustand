@@ -5,7 +5,7 @@ import NavigationTabs from '@/component/NavigationTabs';
 import { MediaCard, MediaItem } from '@/component/MediaCard';
 import IndexBar from '@/component/IndexBar';
 import { useMediaStore } from '@/store/mediaStore';
-import { SearchResult, IssuepoolData } from '@/app/lib/types';
+import { SearchResult, IssuepoolData } from "../../../lib/types";
 import axios from 'axios';
 
 export default function MaterialityHomePage() {
