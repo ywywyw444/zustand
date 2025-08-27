@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Article, SearchPeriod } from '@/lib/types';
-import { api } from '../lib/api';
+import { api } from '@/lib/api';
 
 interface MediaState {
   loading: boolean;
