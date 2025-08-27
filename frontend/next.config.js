@@ -1,10 +1,8 @@
-import type { NextConfig } from "next";
-import type { Configuration as WebpackConfig } from "webpack";
-import withPWA from "next-pwa";
-import path from "path";
+const withPWA = require("next-pwa");
+const path = require("path");
 
-const config: NextConfig = {
-  webpack: (config: WebpackConfig) => {
+const nextConfig = {
+  webpack: (config) => {
     config.resolve = {
       ...config.resolve,
       alias: {
@@ -25,7 +23,7 @@ const pwaConfig = {
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
-      handler: "NetworkFirst" as const,
+      handler: "NetworkFirst",
       options: {
         cacheName: "offlineCache",
         expiration: {
@@ -38,4 +36,4 @@ const pwaConfig = {
   buildExcludes: [/middleware-manifest\.json$/],
 };
 
-export default withPWA(pwaConfig)(config);
+module.exports = withPWA(pwaConfig)(nextConfig);
