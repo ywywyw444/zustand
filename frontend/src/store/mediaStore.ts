@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Article, SearchPeriod } from '@/app/lib/types';
-import { api } from '@/app/lib/api';
+import axios from 'axios';
 
 interface MediaState {
   loading: boolean;
@@ -54,7 +54,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
 
       // Gateway API 호출
       const gatewayUrl = 'https://gateway-production-4c8b.up.railway.app';
-      const response = await api.post(
+      const response = await axios.post(
         `${gatewayUrl}/api/v1/materiality-service/search-media`,
         searchData,
         {
