@@ -1,11 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { GeistSans, GeistMono } from "next/font/geist";
 import "./globals.css";
 import PWAInstall from "@/component/PWAInstall";
 
-const inter = Inter({
+const geistSans = GeistSans({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  variable: "--font-inter",
+});
+
+const geistMono = GeistMono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -44,7 +49,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="KangYouWon" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${inter.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
         <PWAInstall />
       </body>
