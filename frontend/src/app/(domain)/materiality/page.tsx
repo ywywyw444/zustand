@@ -5,8 +5,8 @@ import NavigationTabs from '@/component/NavigationTabs';
 import { MediaCard, MediaItem } from '@/component/MediaCard';
 import IndexBar from '@/component/IndexBar';
 import { useMediaStore } from '@/store/mediaStore';
-import { SearchResult, IssuepoolData } from '@/lib/types';
-import { api } from '@/lib/api';
+import { SearchResult, IssuepoolData } from '@/app/lib/types';
+import { api } from '@/app/lib/api';
 
 export default function MaterialityHomePage() {
   // Zustand store 사용

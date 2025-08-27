@@ -1,7 +1,22 @@
 import type { NextConfig } from "next";
+import type { Configuration as WebpackConfig } from "webpack";
 import withPWA from "next-pwa";
+import path from "path";
 
-const nextConfig = withPWA({
+const nextConfig: NextConfig = {
+  webpack: (config: WebpackConfig) => {
+    config.resolve = {
+      ...config.resolve,
+      alias: {
+        ...config.resolve?.alias,
+        '@': path.join(__dirname, 'src'),
+      },
+    };
+    return config;
+  },
+};
+
+const withPWAConfig = withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
@@ -26,8 +41,6 @@ const nextConfig = withPWA({
   sw: "sw.js",
   // 메시지 채널 타임아웃 설정
   buildExcludes: [/middleware-manifest\.json$/],
-})({
-  /* config options here */
 });
 
-export default nextConfig;
+export default withPWAConfig(nextConfig);
