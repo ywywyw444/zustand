@@ -6,7 +6,7 @@ import { MediaCard, MediaItem } from '@/component/MediaCard';
 import IndexBar from '@/component/IndexBar';
 import { useMediaStore } from '@/store/mediaStore';
 import { SearchResult, IssuepoolData } from '@/app/lib/types';
-import { api } from '@/app/lib/api';
+import axios from 'axios';
 
 export default function MaterialityHomePage() {
   // Zustand store 사용
@@ -62,7 +62,7 @@ export default function MaterialityHomePage() {
         
         // Gateway를 통해 materiality-service 호출 (GET 방식)
         const gatewayUrl = 'https://gateway-production-4c8b.up.railway.app';
-        const response = await api.get(
+        const response = await axios.get(
           `${gatewayUrl}/api/v1/search/companies`,
           {
             headers: {
@@ -167,7 +167,7 @@ export default function MaterialityHomePage() {
 
       // Gateway를 통해 materiality-service 호출
       const gatewayUrl = 'https://gateway-production-4c8b.up.railway.app';
-              const response = await api.post(
+              const response = await axios.post(
         `${gatewayUrl}/api/v1/materiality-service/issuepool/list`,
         requestData,
         {
