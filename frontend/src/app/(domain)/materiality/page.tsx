@@ -1,30 +1,39 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, ChangeEvent } from 'react';
 import NavigationTabs from '@/component/NavigationTabs';
 import { MediaCard, MediaItem } from '@/component/MediaCard';
 import IndexBar from '@/component/IndexBar';
-import axios from 'axios';
+import { useMediaStore } from '@/store/mediaStore';
+import { SearchResult, IssuepoolData } from '@/lib/types';
+import api from '@/lib/api';
 
 export default function MaterialityHomePage() {
-  const [selectedCompany, setSelectedCompany] = useState('');
+  // Zustand store 사용
+  const { 
+    loading: isMediaSearching,
+    error,
+    companyId: selectedCompany,
+    searchPeriod: reportPeriod,
+    articles,
+    totalResults,
+    setCompanyId,
+    setSearchPeriod,
+    searchMedia,
+    reset: resetMediaSearch
+  } = useMediaStore();
+
   const [companies, setCompanies] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [reportPeriod, setReportPeriod] = useState({
-    startDate: '',
-    endDate: ''
-  });
-  const [searchResult, setSearchResult] = useState<any>(null); // 검색 결과 저장
-  const [excelFilename, setExcelFilename] = useState<string | null>(null); // 엑셀 파일명
-  const [excelBase64, setExcelBase64] = useState<string | null>(null); // 엑셀 Base64 데이터
-  const [companySearchTerm, setCompanySearchTerm] = useState(''); // 기업 검색어
-  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false); // 기업 드롭다운 열림 상태
-  const [isSearchResultCollapsed, setIsSearchResultCollapsed] = useState(false); // 미디어 검색 결과 접기/펼치기 상태
-  const [isFullResultCollapsed, setIsFullResultCollapsed] = useState(true); // 전체 검색 결과 접기/펼치기 상태 (기본값: 접힘)
-  const [isMediaSearching, setIsMediaSearching] = useState(false); // 미디어 검색 중 상태
-
+  const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
+  const [excelFilename, setExcelFilename] = useState<string | null>(null);
+  const [excelBase64, setExcelBase64] = useState<string | null>(null);
+  const [companySearchTerm, setCompanySearchTerm] = useState('');
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  const [isSearchResultCollapsed, setIsSearchResultCollapsed] = useState(false);
+  const [isFullResultCollapsed, setIsFullResultCollapsed] = useState(true);
   // 지난 중대성 평가 목록 상태
-  const [issuepoolData, setIssuepoolData] = useState<any>(null);
+  const [issuepoolData, setIssuepoolData] = useState<IssuepoolData | null>(null);
   const [isIssuepoolLoading, setIsIssuepoolLoading] = useState(false);
 
   // 로그인한 사용자의 기업 정보 가져오기 및 기업 목록 API 호출
@@ -36,7 +45,7 @@ export default function MaterialityHomePage() {
           const user = JSON.parse(userData);
                      if (user.company_id) {
              // 사용자의 기업명을 기본값으로 설정
-             setSelectedCompany(user.company_id);
+             setCompanyId(user.company_id);
              setCompanySearchTerm(user.company_id);
              console.log('✅ 로그인된 사용자의 기업명 설정:', user.company_id);
            }
@@ -53,7 +62,7 @@ export default function MaterialityHomePage() {
         
         // Gateway를 통해 materiality-service 호출 (GET 방식)
         const gatewayUrl = 'https://gateway-production-4c8b.up.railway.app';
-        const response = await axios.get(
+        const response = await api.get(
           `${gatewayUrl}/api/v1/search/companies`,
           {
             headers: {
@@ -128,9 +137,9 @@ export default function MaterialityHomePage() {
     console.log('🔍 searchResult.data 구조:', searchResult.data);
 
     // 데이터 구조 안전하게 확인
-    const companyId = searchResult.data.company_id || searchResult.data.company_name;
-    const startDate = searchResult.data.report_period?.start_date || searchResult.data.search_period?.start_date;
-    const endDate = searchResult.data.report_period?.end_date || searchResult.data.search_period?.end_date;
+    const companyId = searchResult.data.company_id;
+    const startDate = searchResult.data.search_period.start_date;
+    const endDate = searchResult.data.search_period.end_date;
 
     console.log('🔍 추출된 데이터:', { companyId, startDate, endDate });
 
@@ -158,7 +167,7 @@ export default function MaterialityHomePage() {
 
       // Gateway를 통해 materiality-service 호출
       const gatewayUrl = 'https://gateway-production-4c8b.up.railway.app';
-      const response = await axios.post(
+              const response = await api.post(
         `${gatewayUrl}/api/v1/materiality-service/issuepool/list`,
         requestData,
         {
@@ -191,84 +200,38 @@ export default function MaterialityHomePage() {
         return;
       }
       
-      if (!reportPeriod.startDate || !reportPeriod.endDate) {
+      if (!reportPeriod.start_date || !reportPeriod.end_date) {
         alert('보고기간을 설정해주세요.');
         return;
       }
 
       // 시작일이 종료일보다 늦은 경우 검증
-      if (new Date(reportPeriod.startDate) > new Date(reportPeriod.endDate)) {
+      if (new Date(reportPeriod.start_date) > new Date(reportPeriod.end_date)) {
         alert('시작일은 종료일보다 빨라야 합니다.');
         return;
       }
 
-      // 로딩 상태 시작
-      setIsMediaSearching(true);
-
-      // JSON 데이터 구성
-      const searchData = {
-        company_id: selectedCompany,
-        report_period: {
-          start_date: reportPeriod.startDate,
-          end_date: reportPeriod.endDate
-        },
-        search_type: 'materiality_assessment',
-        timestamp: new Date().toISOString()
-      };
-
-      console.log('🚀 미디어 검색 데이터를 Gateway로 전송:', searchData);
-
-      // Gateway를 통해 materiality-service 호출
-      const gatewayUrl = 'https://gateway-production-4c8b.up.railway.app';
-      const response = await axios.post(
-        `${gatewayUrl}/api/v1/materiality-service/search-media`, 
-        searchData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
-      );
-
-      console.log('✅ Gateway 응답:', response.data);
-
-      if (response.data.success) {
-                // 검색 결과 저장
-        setSearchResult(response.data);
-        
-        // 엑셀 파일 정보 추출
-        if (response.data.excel_filename && response.data.excel_base64) {
-            setExcelFilename(response.data.excel_filename);
-            setExcelBase64(response.data.excel_base64);
-        }
-        
-        alert(`✅ 미디어 검색 요청이 성공적으로 전송되었습니다!\n\n기업: ${selectedCompany}\n기간: ${reportPeriod.startDate} ~ ${reportPeriod.endDate}\n\n총 ${response.data.data?.total_results || 0}개의 뉴스 기사를 찾았습니다.`);
-        
-        // 성공 후 추가 처리 로직 (예: 검색 결과 표시, 로딩 상태 관리 등)
-        // 여기에 실제 검색 결과를 받아와서 mediaItems를 업데이트하는 로직 추가 가능
-        
-      } else {
-        alert(`❌ 미디어 검색 요청 실패: ${response.data.message || '알 수 없는 오류'}`);
-      }
-
-    } catch (error: unknown) {
-      console.error('❌ 미디어 검색 요청 실패:', error);
+      await searchMedia();
       
-      // 에러 응답 처리 - 타입 가드 사용
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: { message?: string; detail?: string } } };
-        if (axiosError.response?.data) {
-          const errorData = axiosError.response.data;
-          alert(`❌ 미디어 검색 요청 실패: ${errorData.message || errorData.detail || '알 수 없는 오류'}`);
-        } else {
-          alert('❌ 미디어 검색 요청에 실패했습니다. Gateway 서버 연결을 확인해주세요.');
-        }
-      } else {
-        alert('❌ 미디어 검색 요청에 실패했습니다. Gateway 서버 연결을 확인해주세요.');
+      // 검색 결과가 성공적으로 저장되면 알림
+      if (!error && articles) {
+        // 검색 결과를 searchResult 상태에 저장
+        setSearchResult({
+          success: true,
+          data: {
+            company_id: selectedCompany,
+            search_period: reportPeriod,
+            articles,
+            total_results: totalResults
+          }
+        });
+
+        alert(`✅ 미디어 검색이 완료되었습니다!\n\n기업: ${selectedCompany}\n기간: ${reportPeriod.start_date} ~ ${reportPeriod.end_date}\n\n총 ${totalResults}개의 뉴스 기사를 찾았습니다.`);
       }
-    } finally {
-      // 로딩 상태 종료
-      setIsMediaSearching(false);
+
+    } catch (err: any) {
+      console.error('❌ 미디어 검색 요청 실패:', err);
+      alert(err.message || '미디어 검색 중 오류가 발생했습니다.');
     }
   };
 
@@ -279,7 +242,7 @@ export default function MaterialityHomePage() {
 
   // 기업 선택 처리
   const handleCompanySelect = (company: string) => {
-    setSelectedCompany(company);
+    setCompanyId(company);
     setCompanySearchTerm(company);
     setIsCompanyDropdownOpen(false);
   };
@@ -291,8 +254,8 @@ export default function MaterialityHomePage() {
   };
 
   // 기업 검색어 변경 처리
-  const handleCompanySearchChange = (value: string) => {
-    setCompanySearchTerm(value);
+  const handleCompanySearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setCompanySearchTerm(e.target.value);
     setIsCompanyDropdownOpen(true);
   };
 
@@ -378,7 +341,7 @@ export default function MaterialityHomePage() {
                    <input
                      type="text"
                      value={companySearchTerm}
-                     onChange={(e) => handleCompanySearchChange(e.target.value)}
+                                           onChange={handleCompanySearchChange}
                      onFocus={() => setIsCompanyDropdownOpen(true)}
                      placeholder={loading ? "🔄 기업 목록을 불러오는 중..." : "기업명을 입력하거나 선택하세요"}
                      className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
@@ -443,11 +406,11 @@ export default function MaterialityHomePage() {
                     <label className="block text-xs text-gray-500 mb-1">시작일</label>
                                          <input
                        type="date"
-                       value={reportPeriod.startDate}
-                       onChange={(e) => setReportPeriod(prev => ({ ...prev, startDate: e.target.value }))}
+                                             value={reportPeriod.start_date}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchPeriod({ ...reportPeriod, start_date: e.target.value })}
                        disabled={isMediaSearching}
                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
-                         reportPeriod.startDate ? 'text-gray-900 font-medium' : 'text-gray-500'
+                         reportPeriod.start_date ? 'text-gray-900 font-medium' : 'text-gray-500'
                        } ${isMediaSearching ? 'cursor-not-allowed opacity-50' : ''}`}
                      />
                   </div>
@@ -455,11 +418,11 @@ export default function MaterialityHomePage() {
                     <label className="block text-xs text-gray-500 mb-1">종료일</label>
                                          <input
                        type="date"
-                       value={reportPeriod.endDate}
-                       onChange={(e) => setReportPeriod(prev => ({ ...prev, endDate: e.target.value }))}
+                                             value={reportPeriod.end_date}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchPeriod({ ...reportPeriod, end_date: e.target.value })}
                        disabled={isMediaSearching}
                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
-                         reportPeriod.endDate ? 'text-gray-900 font-medium' : 'text-gray-500'
+                         reportPeriod.end_date ? 'text-gray-900 font-medium' : 'text-gray-500'
                        } ${isMediaSearching ? 'cursor-not-allowed opacity-50' : ''}`}
                      />
                   </div>
