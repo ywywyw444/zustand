@@ -3,7 +3,15 @@ const path = require('path');
 
 const nextConfig = {
   eslint: {
-    ignoreDuringBuilds: true // 빌드 시 린트 오류로 fail 안 함
+    ignoreDuringBuilds: true
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://gateway-production-4c8b.up.railway.app/api/:path*'
+      }
+    ];
   },
   webpack: (config) => {
     config.resolve.alias = {
@@ -14,7 +22,6 @@ const nextConfig = {
   },
 };
 
-// next-pwa와 Next.js 15 타입 충돌 임시 해결을 위한 as any 캐스팅
 module.exports = withPWA({
   dest: "public",
   register: true,
