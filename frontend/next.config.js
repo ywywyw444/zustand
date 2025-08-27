@@ -1,21 +1,19 @@
 const withPWA = require("next-pwa");
-const path = require("path");
+const path = require('path');
 
 const nextConfig = {
+  reactStrictMode: true,
   webpack: (config) => {
-    config.resolve = {
-      ...config.resolve,
-      alias: {
-        ...config.resolve?.alias,
-        '@': path.join(__dirname, 'src'),
-      },
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.join(__dirname, 'src'),
     };
     return config;
   },
 };
 
-// PWA 설정
-const pwaConfig = {
+// next-pwa와 Next.js 15 타입 충돌 임시 해결을 위한 as any 캐스팅
+module.exports = withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
@@ -34,6 +32,4 @@ const pwaConfig = {
     },
   ],
   buildExcludes: [/middleware-manifest\.json$/],
-};
-
-module.exports = withPWA(pwaConfig)(nextConfig);
+})(nextConfig);
