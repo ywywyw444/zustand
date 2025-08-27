@@ -1,10 +1,13 @@
 module.exports = {
-  root: true,
-  extends: ["next", "next/core-web-vitals"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
-    project: ["./tsconfig.eslint.json"],
-    tsconfigRootDir: __dirname,
+    project: "./tsconfig.json",
+    tsconfigRootDir: "./",
+    sourceType: "module"
   },
   plugins: ["@typescript-eslint"],
+  extends: ["next", "next/core-web-vitals"],
+  rules: {
+    "@typescript-eslint/no-unsafe-assignment": "error"
+  }
 };
