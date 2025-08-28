@@ -463,13 +463,36 @@ export default function MaterialityHomePage() {
                 <h2 className="text-2xl font-semibold text-gray-800">
                   🔍 미디어 검색 결과
                 </h2>
-                <button
-                  onClick={() => setIsSearchResultCollapsed(!isSearchResultCollapsed)}
-                  className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                >
-                  <span>{isSearchResultCollapsed ? '펼치기' : '접기'}</span>
-                  <span className="text-lg">{isSearchResultCollapsed ? '▼' : '▲'}</span>
-                </button>
+                <div className="flex items-center space-x-2">
+                  {/* Zustand 저장 버튼 */}
+                  <div className="flex space-x-1 mr-4">
+                    <button
+                      onClick={() => {
+                        // Zustand store에 검색 결과 저장
+                        setCompanyId(searchResult.data.company_id);
+                        setSearchPeriod(searchResult.data.search_period);
+                        // searchMedia 함수를 통해 저장
+                        searchMedia({
+                          company_id: searchResult.data.company_id,
+                          search_period: searchResult.data.search_period
+                        });
+
+                        alert(`${searchResult.data.company_id}의 검색 결과가 저장되었습니다.`);
+                      }}
+                      className="px-2 py-1 text-xs font-medium text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 rounded transition-colors duration-200"
+                      title="현재 검색 결과를 저장"
+                    >
+                      💾 저장
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setIsSearchResultCollapsed(!isSearchResultCollapsed)}
+                    className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                  >
+                    <span>{isSearchResultCollapsed ? '펼치기' : '접기'}</span>
+                    <span className="text-lg">{isSearchResultCollapsed ? '▼' : '▲'}</span>
+                  </button>
+                </div>
               </div>
               
               {/* 접힌 상태일 때 간단한 요약만 표시 */}
