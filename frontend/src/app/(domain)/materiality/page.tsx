@@ -234,40 +234,69 @@ export default function MaterialityHomePage() {
         return;
       }
 
-      // 검색 시작
-      await searchMedia({
+      // 로딩 상태 시작
+      setIsMediaSearching(true);
+
+      // JSON 데이터 구성
+      const searchData = {
         company_id: selectedCompany,
-        search_period: reportPeriod
-      });
-      
-      // 검색 결과가 성공적으로 저장되면 알림
-      if (!error && articles) {
-        // 검색 결과를 searchResult 상태에 저장
-        setSearchResult({
-          success: true,
-          data: {
-            company_id: selectedCompany,
-            search_period: reportPeriod,
-            articles,
-            total_results: totalResults
+        report_period: {
+          start_date: reportPeriod.start_date,
+          end_date: reportPeriod.end_date
+        },
+        search_type: 'materiality_assessment',
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('🚀 미디어 검색 데이터를 Gateway로 전송:', searchData);
+
+      // Gateway를 통해 materiality-service 호출
+      const gatewayUrl = 'https://gateway-production-4c8b.up.railway.app';
+      const response = await axios.post(
+        `${gatewayUrl}/api/v1/materiality-service/search-media`, 
+        searchData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
           }
-        });
+        }
+      );
 
-        // 검색 결과를 localStorage에 저장
-        localStorage.setItem('savedMediaSearch', JSON.stringify({
-          company_id: selectedCompany,
-          search_period: reportPeriod,
-          articles,
-          total_results: totalResults,
-          timestamp: new Date().toISOString()
-        }));
+      console.log('✅ Gateway 응답:', response.data);
 
-        alert(`✅ 미디어 검색이 완료되었습니다!\n\n기업: ${selectedCompany}\n기간: ${reportPeriod.start_date} ~ ${reportPeriod.end_date}\n\n총 ${totalResults}개의 뉴스 기사를 찾았습니다.`);
+      if (response.data.success) {
+        // 검색 결과 저장
+        setSearchResult(response.data);
+        
+        // 엑셀 파일 정보 추출
+        if (response.data.excel_filename && response.data.excel_base64) {
+          setExcelFilename(response.data.excel_filename);
+          setExcelBase64(response.data.excel_base64);
+        }
+        
+        alert(`✅ 미디어 검색이 완료되었습니다!\n\n기업: ${selectedCompany}\n기간: ${reportPeriod.start_date} ~ ${reportPeriod.end_date}\n\n총 ${response.data.data?.total_results || 0}개의 뉴스 기사를 찾았습니다.`);
+      } else {
+        alert(`❌ 미디어 검색 요청 실패: ${response.data.message || '알 수 없는 오류'}`);
       }
 
-    } catch (err: any) {
-      console.error('❌ 미디어 검색 요청 실패:', err);
-      alert(err.message || '미디어 검색 중 오류가 발생했습니다.');
+    } catch (error: unknown) {
+      console.error('❌ 미디어 검색 요청 실패:', error);
+      
+      // 에러 응답 처리
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string; detail?: string } } };
+        if (axiosError.response?.data) {
+          const errorData = axiosError.response.data;
+          alert(`❌ 미디어 검색 요청 실패: ${errorData.message || errorData.detail || '알 수 없는 오류'}`);
+        } else {
+          alert('❌ 미디어 검색 요청에 실패했습니다. Gateway 서버 연결을 확인해주세요.');
+        }
+      } else {
+        alert('❌ 미디어 검색 요청에 실패했습니다. Gateway 서버 연결을 확인해주세요.');
+      }
+    } finally {
+      // 로딩 상태 종료
+      setIsMediaSearching(false);
     }
   };
 
@@ -500,27 +529,6 @@ export default function MaterialityHomePage() {
                   🔍 미디어 검색 결과
                 </h2>
                 <div className="flex items-center space-x-2">
-                  {/* Zustand 저장 버튼 */}
-                  <div className="flex space-x-1 mr-4">
-                    <button
-                      onClick={() => {
-                        // Zustand store에 검색 결과 저장
-                        setCompanyId(searchResult.data.company_id);
-                        setSearchPeriod(searchResult.data.search_period);
-                        // searchMedia 함수를 통해 저장
-                        searchMedia({
-                          company_id: searchResult.data.company_id,
-                          search_period: searchResult.data.search_period
-                        });
-
-                        alert(`${searchResult.data.company_id}의 검색 결과가 저장되었습니다.`);
-                      }}
-                      className="px-2 py-1 text-xs font-medium text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 rounded transition-colors duration-200"
-                      title="현재 검색 결과를 저장"
-                    >
-                      💾 저장
-                    </button>
-                  </div>
                   <button
                     onClick={() => setIsSearchResultCollapsed(!isSearchResultCollapsed)}
                     className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
@@ -699,39 +707,7 @@ export default function MaterialityHomePage() {
             </div>
           )}
 
-          {/* 검색 결과 저장 및 다운로드 */}
-          {searchResult && (
-            <div className="flex justify-end space-x-2 mt-4 mb-8">
-              <button
-                onClick={() => {
-                  if (excelBase64) {
-                    downloadExcelFromBase64(excelBase64, excelFilename || `media_search_${selectedCompany}_${new Date().toISOString().split('T')[0]}.xlsx`);
-                  } else {
-                    alert('엑셀 파일이 준비되지 않았습니다.');
-                  }
-                }}
-                className="px-4 py-2 text-sm font-medium text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200"
-              >
-                📊 엑셀 다운로드
-              </button>
-              <button
-                onClick={() => {
-                  // 검색 결과를 localStorage에 저장
-                  localStorage.setItem('savedMediaSearch', JSON.stringify({
-                    company_id: searchResult.data.company_id,
-                    search_period: searchResult.data.search_period,
-                    articles: searchResult.data.articles,
-                    total_results: searchResult.data.total_results,
-                    timestamp: new Date().toISOString()
-                  }));
-                  alert('검색 결과가 저장되었습니다.');
-                }}
-                className="px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors duration-200"
-              >
-                💾 검색 결과 저장
-              </button>
-            </div>
-          )}
+
 
           {/* 지난 중대성 평가 목록 */}
           <div id="first-assessment" className="bg-white rounded-xl shadow-lg p-6 mb-12">
