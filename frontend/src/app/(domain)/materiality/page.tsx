@@ -43,34 +43,7 @@ export default function MaterialityHomePage() {
   const [issuepoolData, setIssuepoolData] = useState<IssuepoolData | null>(null);
   const [isIssuepoolLoading, setIsIssuepoolLoading] = useState(false);
 
-  // 저장된 검색 결과 불러오기
-  useEffect(() => {
-    const savedSearch = localStorage.getItem('savedMediaSearch');
-    if (savedSearch) {
-      try {
-        const savedData = JSON.parse(savedSearch);
-        setCompanyId(savedData.company_id);
-        setCompanySearchTerm(savedData.company_id);
-        setSearchPeriod(savedData.search_period);
-        setSearchResult({
-          success: true,
-          data: {
-            company_id: savedData.company_id,
-            search_period: savedData.search_period,
-            articles: savedData.articles,
-            total_results: savedData.total_results
-          }
-        });
-        if (savedData.excel_filename && savedData.excel_base64) {
-          setExcelFilename(savedData.excel_filename);
-          setExcelBase64(savedData.excel_base64);
-        }
-        console.log('✅ 저장된 검색 결과 불러옴:', savedData.company_id);
-      } catch (error) {
-        console.error('저장된 검색 결과를 불러오는데 실패했습니다:', error);
-      }
-    }
-  }, []);
+  // 이전 검색 결과 자동 로드 제거 - 버튼 클릭시에만 로드하도록 변경
 
   // 로그인한 사용자의 기업 정보 가져오기
   useEffect(() => {
@@ -425,19 +398,20 @@ export default function MaterialityHomePage() {
                           start_date: savedData.search_period.start_date,
                           end_date: savedData.search_period.end_date
                         });
-                        setSearchResult({
+                        const searchResultData = {
                           success: true,
                           data: {
                             company_id: savedData.company_id,
                             search_period: savedData.search_period,
                             articles: savedData.articles,
                             total_results: savedData.total_results
-                          }
-                        });
-                        if (savedData.excel_filename && savedData.excel_base64) {
-                          setExcelFilename(savedData.excel_filename);
-                          setExcelBase64(savedData.excel_base64);
-                        }
+                          },
+                          excel_filename: savedData.excel_filename,
+                          excel_base64: savedData.excel_base64
+                        };
+                        setSearchResult(searchResultData);
+                        setExcelFilename(savedData.excel_filename);
+                        setExcelBase64(savedData.excel_base64);
                         alert('✅ 이전 검색 정보를 성공적으로 불러왔습니다.');
                       } catch (error) {
                         console.error('저장된 검색 결과를 불러오는데 실패했습니다:', error);
