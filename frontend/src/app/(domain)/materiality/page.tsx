@@ -786,10 +786,7 @@ export default function MaterialityHomePage() {
                       total_results: searchResult.data?.total_results,
                       timestamp: new Date().toISOString()
                     };
-                    console.log('Saving to localStorage:', { 
-                      ...dataToSave, 
-                      excel_base64: dataToSave.excel_base64 ? 'exists' : 'missing' 
-                    });
+                    console.log('Saving to localStorage:', dataToSave);
                     localStorage.setItem('savedMediaSearch', JSON.stringify(dataToSave));
                     alert('✅ 검색 결과가 저장되었습니다.');
                   }}
