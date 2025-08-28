@@ -415,10 +415,31 @@ export default function MaterialityHomePage() {
                         setSearchResult(searchResultData);
 
                         // 엑셀 데이터 생성 및 저장
-                        const excelFileName = `${savedData.company_id}_media_search_${new Date().getTime()}.xlsx`;
-                        const excelData = btoa(JSON.stringify(savedData.articles)); // 간단한 Base64 인코딩
-                        setExcelFilename(excelFileName);
-                        setExcelBase64(excelData);
+                        try {
+                          const excelFileName = `${savedData.company_id}_media_search_${new Date().getTime()}.xlsx`;
+                          
+                          // CSV 형식의 데이터 생성
+                          let csvContent = "날짜,제목,키워드,카테고리,링크\n";
+                          savedData.articles.forEach((article: any) => {
+                            const row = [
+                              article.pubDate || '',
+                              article.title?.replace(/,/g, ' ') || '',
+                              article.issue || '',
+                              article.original_category || '',
+                              article.originallink || ''
+                            ].join(',');
+                            csvContent += row + "\n";
+                          });
+                          
+                          // Base64 인코딩
+                          const excelData = btoa(unescape(encodeURIComponent(csvContent)));
+                          
+                          setExcelFilename(excelFileName);
+                          setExcelBase64(excelData);
+                          console.log('Excel data generated successfully');
+                        } catch (error) {
+                          console.error('Excel data generation failed:', error);
+                        }
                         alert('✅ 이전 검색 정보를 성공적으로 불러왔습니다.');
                       } catch (error) {
                         console.error('저장된 검색 결과를 불러오는데 실패했습니다:', error);
