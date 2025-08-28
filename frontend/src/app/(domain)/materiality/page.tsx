@@ -19,12 +19,13 @@ export default function MaterialityHomePage() {
     totalResults,
     setCompanyId,
     setSearchPeriod,
+    setLoading,
     searchMedia,
     reset: resetMediaSearch
   } = useMediaStore();
 
   const [companies, setCompanies] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [isCompanyLoading, setIsCompanyLoading] = useState(false);
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
   const [excelFilename, setExcelFilename] = useState<string | null>(null);
   const [excelBase64, setExcelBase64] = useState<string | null>(null);
@@ -80,7 +81,7 @@ export default function MaterialityHomePage() {
 
     const fetchCompanies = async () => {
       try {
-        setLoading(true);
+        setIsCompanyLoading(true);
         console.log('🔍 기업 목록을 Gateway를 통해 가져오는 중...');
         
         // Gateway를 통해 materiality-service 호출 (GET 방식)
@@ -120,7 +121,7 @@ export default function MaterialityHomePage() {
           console.error('응답 데이터:', error.response.data);
         }
       } finally {
-        setLoading(false);
+        setIsCompanyLoading(false);
       }
     };
 
@@ -235,7 +236,7 @@ export default function MaterialityHomePage() {
       }
 
       // 로딩 상태 시작
-      setIsMediaSearching(true);
+      setLoading(true);
 
       // JSON 데이터 구성
       const searchData = {
@@ -296,7 +297,7 @@ export default function MaterialityHomePage() {
       }
     } finally {
       // 로딩 상태 종료
-      setIsMediaSearching(false);
+      setLoading(false);
     }
   };
 
@@ -408,11 +409,11 @@ export default function MaterialityHomePage() {
                      value={companySearchTerm}
                                            onChange={handleCompanySearchChange}
                      onFocus={() => setIsCompanyDropdownOpen(true)}
-                     placeholder={loading ? "🔄 기업 목록을 불러오는 중..." : "기업명을 입력하거나 선택하세요"}
+                     placeholder={isCompanyLoading ? "🔄 기업 목록을 불러오는 중..." : "기업명을 입력하거나 선택하세요"}
                      className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                        selectedCompany ? 'text-gray-900 font-medium' : 'text-gray-500'
                      }`}
-                     disabled={loading || isMediaSearching}
+                     disabled={isCompanyLoading || isMediaSearching}
                    />
                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
                      {companySearchTerm && (
@@ -439,7 +440,7 @@ export default function MaterialityHomePage() {
                  </div>
                 
                 {/* 드롭다운 목록 */}
-                {isCompanyDropdownOpen && !loading && companies.length > 0 && (
+                {isCompanyDropdownOpen && !isCompanyLoading && companies.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {filteredCompanies.length === 0 ? (
                       <div className="px-4 py-2 text-gray-500 text-sm">

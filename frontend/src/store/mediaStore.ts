@@ -13,6 +13,7 @@ interface MediaState {
   // 상태 업데이트 메서드
   setCompanyId: (id: string) => void;
   setSearchPeriod: (period: SearchPeriod) => void;
+  setLoading: (isLoading: boolean) => void;
   
   // 미디어 검색 메서드
   searchMedia: (payload?: { 
@@ -39,6 +40,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
 
   setCompanyId: (id) => set({ companyId: id }),
   setSearchPeriod: (period) => set({ searchPeriod: period }),
+  setLoading: (isLoading) => set({ loading: isLoading }),
 
   searchMedia: async (payload) => {
     const state = get();
