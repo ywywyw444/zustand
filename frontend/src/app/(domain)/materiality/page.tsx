@@ -413,18 +413,12 @@ export default function MaterialityHomePage() {
                           }
                         };
                         setSearchResult(searchResultData);
-                        
-                        // 엑셀 파일 정보가 있는 경우에만 설정
-                        if (savedData.excel_filename && savedData.excel_base64) {
-                          console.log('Excel file info found:', {
-                            filename: savedData.excel_filename,
-                            hasBase64: !!savedData.excel_base64
-                          });
-                          setExcelFilename(savedData.excel_filename);
-                          setExcelBase64(savedData.excel_base64);
-                        } else {
-                          console.log('No excel file info in saved data');
-                        }
+
+                        // 엑셀 데이터 생성 및 저장
+                        const excelFileName = `${savedData.company_id}_media_search_${new Date().getTime()}.xlsx`;
+                        const excelData = btoa(JSON.stringify(savedData.articles)); // 간단한 Base64 인코딩
+                        setExcelFilename(excelFileName);
+                        setExcelBase64(excelData);
                         alert('✅ 이전 검색 정보를 성공적으로 불러왔습니다.');
                       } catch (error) {
                         console.error('저장된 검색 결과를 불러오는데 실패했습니다:', error);
