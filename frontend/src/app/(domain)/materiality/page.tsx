@@ -37,13 +37,18 @@ export default function MaterialityHomePage() {
   const [issuepoolData, setIssuepoolData] = useState<IssuepoolData | null>(null);
   const [isIssuepoolLoading, setIsIssuepoolLoading] = useState(false);
 
-  // 저장된 검색 결과 불러오기
+  // 저장된 검색 결과와 사용자 정보 불러오기
   React.useEffect(() => {
+    // 저장된 검색 결과 확인
     const savedSearch = localStorage.getItem('savedMediaSearch');
+    let savedCompanyId = null;
+
     if (savedSearch) {
       try {
         const savedData = JSON.parse(savedSearch);
+        savedCompanyId = savedData.company_id;
         setCompanyId(savedData.company_id);
+        setCompanySearchTerm(savedData.company_id);
         setSearchPeriod(savedData.search_period);
         setSearchResult({
           success: true,
@@ -54,30 +59,29 @@ export default function MaterialityHomePage() {
             total_results: savedData.total_results
           }
         });
+        console.log('✅ 저장된 검색 결과 불러옴:', savedData.company_id);
       } catch (error) {
         console.error('저장된 검색 결과를 불러오는데 실패했습니다:', error);
       }
     }
-  }, []);
 
-  // 로그인한 사용자의 기업 정보 가져오기 및 기업 목록 API 호출
-  React.useEffect(() => {
-    const getUserCompany = () => {
+    // 저장된 검색 결과가 없는 경우에만 로그인한 사용자의 기업 정보 사용
+    if (!savedCompanyId) {
       try {
         const userData = localStorage.getItem('user');
         if (userData) {
           const user = JSON.parse(userData);
-                     if (user.company_id) {
-             // 사용자의 기업명을 기본값으로 설정
-             setCompanyId(user.company_id);
-             setCompanySearchTerm(user.company_id);
-             console.log('✅ 로그인된 사용자의 기업명 설정:', user.company_id);
-           }
+          if (user.company_id) {
+            setCompanyId(user.company_id);
+            setCompanySearchTerm(user.company_id);
+            console.log('✅ 로그인된 사용자의 기업명 설정:', user.company_id);
+          }
         }
       } catch (error) {
         console.error('사용자 정보를 가져오는데 실패했습니다:', error);
       }
-    };
+    }
+  }, []);
 
     const fetchCompanies = async () => {
       try {
