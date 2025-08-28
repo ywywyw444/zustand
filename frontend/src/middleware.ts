@@ -12,18 +12,27 @@ const PUBLIC_PATHS = [
   "/workbox-8817a5e5.js"
 ];
 
+// 공개 접근이 필요한 경로
+const PUBLIC_ROUTES = [
+  "/",
+  "/auth/login",
+  "/auth/signup"
+];
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 정적 파일 체크
+  // 정적 파일 및 공개 경로 체크
   const isPublic =
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/public") ||
     PUBLIC_FILE.test(pathname) ||
     PUBLIC_PATHS.includes(pathname);
 
-  // 공개 경로 체크
-  if (isPublic || pathname === "/" || pathname.startsWith("/auth/")) {
+  // 공개 라우트 체크
+  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+
+  if (isPublic || isPublicRoute) {
     return NextResponse.next();
   }
 
