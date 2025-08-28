@@ -414,31 +414,13 @@ export default function MaterialityHomePage() {
                         };
                         setSearchResult(searchResultData);
 
-                        // 엑셀 데이터 생성 및 저장
-                        try {
-                          const excelFileName = `${savedData.company_id}_media_search_${new Date().getTime()}.xlsx`;
-                          
-                          // CSV 형식의 데이터 생성
-                          let csvContent = "날짜,제목,키워드,카테고리,링크\n";
-                          savedData.articles.forEach((article: any) => {
-                            const row = [
-                              article.pubDate || '',
-                              article.title?.replace(/,/g, ' ') || '',
-                              article.issue || '',
-                              article.original_category || '',
-                              article.originallink || ''
-                            ].join(',');
-                            csvContent += row + "\n";
-                          });
-                          
-                          // Base64 인코딩
-                          const excelData = btoa(unescape(encodeURIComponent(csvContent)));
-                          
-                          setExcelFilename(excelFileName);
-                          setExcelBase64(excelData);
-                          console.log('Excel data generated successfully');
-                        } catch (error) {
-                          console.error('Excel data generation failed:', error);
+                        // 검색 결과에서 받은 엑셀 파일 정보를 그대로 사용
+                        if (savedData.data?.excel_filename && savedData.data?.excel_base64) {
+                          setExcelFilename(savedData.data.excel_filename);
+                          setExcelBase64(savedData.data.excel_base64);
+                          console.log('Excel data loaded from search result');
+                        } else {
+                          console.log('No excel data in search result');
                         }
                         alert('✅ 이전 검색 정보를 성공적으로 불러왔습니다.');
                       } catch (error) {
@@ -707,10 +689,48 @@ export default function MaterialityHomePage() {
                   )}
                   
                                        {/* 전체 검색 결과 표시 */}
+                    {/* 검색 결과 저장 버튼 */}
+                    <div className="mt-8 mb-8">
+                      <button
+                        onClick={() => {
+                          // Zustand store에 검색 결과 저장
+                          setCompanyId(searchResult.data?.company_id);
+                          setSearchPeriod({
+                            start_date: searchResult.data?.search_period?.start_date,
+                            end_date: searchResult.data?.search_period?.end_date
+                          });
+                          // localStorage에도 저장
+                          const dataToSave = {
+                            company_id: searchResult.data?.company_id,
+                            search_period: {
+                              start_date: searchResult.data?.search_period?.start_date,
+                              end_date: searchResult.data?.search_period?.end_date
+                            },
+                            articles: searchResult.data?.articles,
+                            total_results: searchResult.data?.total_results,
+                            data: {
+                              excel_filename: excelFilename,
+                              excel_base64: excelBase64
+                            },
+                            timestamp: new Date().toISOString()
+                          };
+                          console.log('Saving to localStorage:', dataToSave);
+                          localStorage.setItem('savedMediaSearch', JSON.stringify(dataToSave));
+                          alert('✅ 검색 결과가 저장되었습니다.');
+                        }}
+                        className="w-full inline-flex items-center justify-center px-4 py-3 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 transition-colors duration-200"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
+                        검색 결과 저장하기
+                      </button>
+                    </div>
+
                     {searchResult.data?.articles && searchResult.data.articles.length > 8 && (
                       <div className="mt-8">
-                                                 <div className="flex items-center justify-between mb-4">
-                           <h3 className="font-semibold text-gray-800">📰 전체 검색 결과 ({searchResult.data.articles.length}개)</h3>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-semibold text-gray-800">📰 전체 검색 결과 ({searchResult.data.articles.length}개)</h3>
                            <button
                              onClick={() => setIsFullResultCollapsed(!isFullResultCollapsed)}
                              className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
@@ -776,51 +796,7 @@ export default function MaterialityHomePage() {
 
 
 
-          {/* 검색 결과 저장하기 */}
-          {searchResult && (
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-12">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                    💾 검색 결과 저장
-                  </h2>
-                  <p className="text-gray-600">
-                    현재 검색 결과를 저장하여 나중에 다시 볼 수 있습니다.
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    // Zustand store에 검색 결과 저장
-                    setCompanyId(searchResult.data?.company_id);
-                    setSearchPeriod({
-                      start_date: searchResult.data?.search_period?.start_date,
-                      end_date: searchResult.data?.search_period?.end_date
-                    });
-                    // localStorage에도 저장
-                    const dataToSave = {
-                      company_id: searchResult.data?.company_id,
-                      search_period: {
-                        start_date: searchResult.data?.search_period?.start_date,
-                        end_date: searchResult.data?.search_period?.end_date
-                      },
-                      articles: searchResult.data?.articles,
-                      total_results: searchResult.data?.total_results,
-                      timestamp: new Date().toISOString()
-                    };
-                    console.log('Saving to localStorage:', dataToSave);
-                    localStorage.setItem('savedMediaSearch', JSON.stringify(dataToSave));
-                    alert('✅ 검색 결과가 저장되었습니다.');
-                  }}
-                  className="inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 transition-colors duration-200"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                  </svg>
-                  검색 결과 저장하기
-                </button>
-              </div>
-            </div>
-          )}
+
 
           {/* 지난 중대성 평가 목록 */}
           <div id="first-assessment" className="bg-white rounded-xl shadow-lg p-6 mb-12">
