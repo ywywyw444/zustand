@@ -731,6 +731,52 @@ export default function MaterialityHomePage() {
 
 
 
+          {/* 검색 결과 저장하기 */}
+          {searchResult && (
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-12">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+                    💾 검색 결과 저장
+                  </h2>
+                  <p className="text-gray-600">
+                    현재 검색 결과를 저장하여 나중에 다시 볼 수 있습니다.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    // Zustand store에 검색 결과 저장
+                    setCompanyId(searchResult.data?.company_id);
+                    setSearchPeriod({
+                      start_date: searchResult.data?.search_period?.start_date,
+                      end_date: searchResult.data?.search_period?.end_date
+                    });
+                    // localStorage에도 저장
+                    localStorage.setItem('savedMediaSearch', JSON.stringify({
+                      company_id: searchResult.data?.company_id,
+                      search_period: {
+                        start_date: searchResult.data?.search_period?.start_date,
+                        end_date: searchResult.data?.search_period?.end_date
+                      },
+                      articles: searchResult.data?.articles,
+                      total_results: searchResult.data?.total_results,
+                      excel_filename: excelFilename,
+                      excel_base64: excelBase64,
+                      timestamp: new Date().toISOString()
+                    }));
+                    alert('✅ 검색 결과가 저장되었습니다.');
+                  }}
+                  className="inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 transition-colors duration-200"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
+                  검색 결과 저장하기
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* 지난 중대성 평가 목록 */}
           <div id="first-assessment" className="bg-white rounded-xl shadow-lg p-6 mb-12">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">
