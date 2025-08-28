@@ -784,8 +784,6 @@ export default function MaterialityHomePage() {
                       },
                       articles: searchResult.data?.articles,
                       total_results: searchResult.data?.total_results,
-                      excel_filename: excelFilename,
-                      excel_base64: excelBase64,
                       timestamp: new Date().toISOString()
                     };
                     console.log('Saving to localStorage:', { 
