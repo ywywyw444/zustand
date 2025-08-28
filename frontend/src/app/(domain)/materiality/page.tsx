@@ -36,6 +36,29 @@ export default function MaterialityHomePage() {
   const [issuepoolData, setIssuepoolData] = useState<IssuepoolData | null>(null);
   const [isIssuepoolLoading, setIsIssuepoolLoading] = useState(false);
 
+  // 저장된 검색 결과 불러오기
+  React.useEffect(() => {
+    const savedSearch = localStorage.getItem('savedMediaSearch');
+    if (savedSearch) {
+      try {
+        const savedData = JSON.parse(savedSearch);
+        setCompanyId(savedData.company_id);
+        setSearchPeriod(savedData.search_period);
+        setSearchResult({
+          success: true,
+          data: {
+            company_id: savedData.company_id,
+            search_period: savedData.search_period,
+            articles: savedData.articles,
+            total_results: savedData.total_results
+          }
+        });
+      } catch (error) {
+        console.error('저장된 검색 결과를 불러오는데 실패했습니다:', error);
+      }
+    }
+  }, []);
+
   // 로그인한 사용자의 기업 정보 가져오기 및 기업 목록 API 호출
   React.useEffect(() => {
     const getUserCompany = () => {
@@ -196,7 +219,7 @@ export default function MaterialityHomePage() {
     try {
       // 입력값 검증
       if (!selectedCompany) {
-        alert('기업을 선택해주세요.\n\n현재 로그인된 기업이 자동으로 선택되어야 합니다.');
+        alert('기업을 선택해주세요.');
         return;
       }
       
@@ -211,7 +234,11 @@ export default function MaterialityHomePage() {
         return;
       }
 
-      await searchMedia();
+      // 검색 시작
+      await searchMedia({
+        company_id: selectedCompany,
+        search_period: reportPeriod
+      });
       
       // 검색 결과가 성공적으로 저장되면 알림
       if (!error && articles) {
@@ -225,6 +252,15 @@ export default function MaterialityHomePage() {
             total_results: totalResults
           }
         });
+
+        // 검색 결과를 localStorage에 저장
+        localStorage.setItem('savedMediaSearch', JSON.stringify({
+          company_id: selectedCompany,
+          search_period: reportPeriod,
+          articles,
+          total_results: totalResults,
+          timestamp: new Date().toISOString()
+        }));
 
         alert(`✅ 미디어 검색이 완료되었습니다!\n\n기업: ${selectedCompany}\n기간: ${reportPeriod.start_date} ~ ${reportPeriod.end_date}\n\n총 ${totalResults}개의 뉴스 기사를 찾았습니다.`);
       }
@@ -660,6 +696,59 @@ export default function MaterialityHomePage() {
                     )}
                 </>
               )}
+            </div>
+          )}
+
+          {/* 검색 결과 저장 및 다운로드 */}
+          {searchResult && (
+            <div className="flex justify-end space-x-2 mt-4 mb-8">
+              <button
+                onClick={() => {
+                  // 검색 결과를 Excel 형식으로 변환
+                  const excelData = searchResult.data.articles.map(article => ({
+                    '기업명': article.company,
+                    '제목': article.title,
+                    '발행일': article.pubDate,
+                    '카테고리': article.original_category,
+                    '이슈': article.issue,
+                    '원문 링크': article.originallink
+                  }));
+
+                  // Excel 파일 생성 및 다운로드
+                  const worksheet = XLSX.utils.json_to_sheet(excelData);
+                  const workbook = XLSX.utils.book_new();
+                  XLSX.utils.book_append_sheet(workbook, worksheet, 'Articles');
+                  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+                  const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `media_search_${selectedCompany}_${new Date().toISOString().split('T')[0]}.xlsx`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  window.URL.revokeObjectURL(url);
+                }}
+                className="px-4 py-2 text-sm font-medium text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200"
+              >
+                📊 엑셀 다운로드
+              </button>
+              <button
+                onClick={() => {
+                  // 검색 결과를 localStorage에 저장
+                  localStorage.setItem('savedMediaSearch', JSON.stringify({
+                    company_id: searchResult.data.company_id,
+                    search_period: searchResult.data.search_period,
+                    articles: searchResult.data.articles,
+                    total_results: searchResult.data.total_results,
+                    timestamp: new Date().toISOString()
+                  }));
+                  alert('검색 결과가 저장되었습니다.');
+                }}
+                className="px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors duration-200"
+              >
+                💾 검색 결과 저장
+              </button>
             </div>
           )}
 
