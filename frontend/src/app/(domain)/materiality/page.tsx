@@ -704,30 +704,11 @@ export default function MaterialityHomePage() {
             <div className="flex justify-end space-x-2 mt-4 mb-8">
               <button
                 onClick={() => {
-                  // 검색 결과를 Excel 형식으로 변환
-                  const excelData = searchResult.data.articles.map(article => ({
-                    '기업명': article.company,
-                    '제목': article.title,
-                    '발행일': article.pubDate,
-                    '카테고리': article.original_category,
-                    '이슈': article.issue,
-                    '원문 링크': article.originallink
-                  }));
-
-                  // Excel 파일 생성 및 다운로드
-                  const worksheet = XLSX.utils.json_to_sheet(excelData);
-                  const workbook = XLSX.utils.book_new();
-                  XLSX.utils.book_append_sheet(workbook, worksheet, 'Articles');
-                  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-                  const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `media_search_${selectedCompany}_${new Date().toISOString().split('T')[0]}.xlsx`;
-                  document.body.appendChild(a);
-                  a.click();
-                  a.remove();
-                  window.URL.revokeObjectURL(url);
+                  if (excelBase64) {
+                    downloadExcelFromBase64(excelBase64, excelFilename || `media_search_${selectedCompany}_${new Date().toISOString().split('T')[0]}.xlsx`);
+                  } else {
+                    alert('엑셀 파일이 준비되지 않았습니다.');
+                  }
                 }}
                 className="px-4 py-2 text-sm font-medium text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200"
               >
