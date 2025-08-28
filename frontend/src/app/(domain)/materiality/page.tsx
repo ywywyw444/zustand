@@ -398,6 +398,11 @@ export default function MaterialityHomePage() {
                           start_date: savedData.search_period.start_date,
                           end_date: savedData.search_period.end_date
                         });
+                        console.log('Loading from localStorage:', {
+                          ...savedData,
+                          excel_base64: savedData.excel_base64 ? 'exists' : 'missing'
+                        });
+                        
                         const searchResultData = {
                           success: true,
                           data: {
@@ -405,13 +410,21 @@ export default function MaterialityHomePage() {
                             search_period: savedData.search_period,
                             articles: savedData.articles,
                             total_results: savedData.total_results
-                          },
-                          excel_filename: savedData.excel_filename,
-                          excel_base64: savedData.excel_base64
+                          }
                         };
                         setSearchResult(searchResultData);
-                        setExcelFilename(savedData.excel_filename);
-                        setExcelBase64(savedData.excel_base64);
+                        
+                        // 엑셀 파일 정보가 있는 경우에만 설정
+                        if (savedData.excel_filename && savedData.excel_base64) {
+                          console.log('Excel file info found:', {
+                            filename: savedData.excel_filename,
+                            hasBase64: !!savedData.excel_base64
+                          });
+                          setExcelFilename(savedData.excel_filename);
+                          setExcelBase64(savedData.excel_base64);
+                        } else {
+                          console.log('No excel file info in saved data');
+                        }
                         alert('✅ 이전 검색 정보를 성공적으로 불러왔습니다.');
                       } catch (error) {
                         console.error('저장된 검색 결과를 불러오는데 실패했습니다:', error);
@@ -769,7 +782,7 @@ export default function MaterialityHomePage() {
                       end_date: searchResult.data?.search_period?.end_date
                     });
                     // localStorage에도 저장
-                    localStorage.setItem('savedMediaSearch', JSON.stringify({
+                    const dataToSave = {
                       company_id: searchResult.data?.company_id,
                       search_period: {
                         start_date: searchResult.data?.search_period?.start_date,
@@ -780,7 +793,12 @@ export default function MaterialityHomePage() {
                       excel_filename: excelFilename,
                       excel_base64: excelBase64,
                       timestamp: new Date().toISOString()
-                    }));
+                    };
+                    console.log('Saving to localStorage:', { 
+                      ...dataToSave, 
+                      excel_base64: dataToSave.excel_base64 ? 'exists' : 'missing' 
+                    });
+                    localStorage.setItem('savedMediaSearch', JSON.stringify(dataToSave));
                     alert('✅ 검색 결과가 저장되었습니다.');
                   }}
                   className="inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 transition-colors duration-200"
