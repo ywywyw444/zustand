@@ -408,12 +408,55 @@ export default function MaterialityHomePage() {
           </div>
 
           {/* 선택 옵션 */}
-          <div id="media-search" className="bg-white rounded-xl shadow-lg p-6 mb-12">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-              🔍 미디어 검색
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div id="media-search" className="bg-white rounded-xl shadow-lg p-6 mb-12">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold text-gray-800">
+                  🔍 미디어 검색
+                </h2>
+                <button
+                  onClick={() => {
+                    const savedSearch = localStorage.getItem('savedMediaSearch');
+                    if (savedSearch) {
+                      try {
+                        const savedData = JSON.parse(savedSearch);
+                        setCompanyId(savedData.company_id);
+                        setCompanySearchTerm(savedData.company_id);
+                        setSearchPeriod({
+                          start_date: savedData.search_period.start_date,
+                          end_date: savedData.search_period.end_date
+                        });
+                        setSearchResult({
+                          success: true,
+                          data: {
+                            company_id: savedData.company_id,
+                            search_period: savedData.search_period,
+                            articles: savedData.articles,
+                            total_results: savedData.total_results
+                          }
+                        });
+                        if (savedData.excel_filename && savedData.excel_base64) {
+                          setExcelFilename(savedData.excel_filename);
+                          setExcelBase64(savedData.excel_base64);
+                        }
+                        alert('✅ 이전 검색 정보를 성공적으로 불러왔습니다.');
+                      } catch (error) {
+                        console.error('저장된 검색 결과를 불러오는데 실패했습니다:', error);
+                        alert('❌ 이전 검색 정보를 불러오는데 실패했습니다.');
+                      }
+                    } else {
+                      alert('저장된 이전 검색 정보가 없습니다.');
+                    }
+                  }}
+                  className="inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 transition-colors duration-200"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  이전 검색 정보 불러오기
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="relative company-dropdown-container">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   기업 선택
